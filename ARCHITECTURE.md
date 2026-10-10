@@ -29,6 +29,7 @@ Each Godot physics tick:
 | ChaserEnemy3D | Chasing movement and Chaser stats | Our Enemy3D |
 | StrikerEnemy3D | Ranged-attack AI and Striker stats | Our Enemy3D |
 | Bullet3D | Bullet lifetime, movement, collision/damage | CharacterBody3D |
+| SurvivalTimer | 60-second countdown and 10-second announcements | None (plain C#) |
 
 - `Player3D.ShotRequested` -> `Game3D.SpawnPlayerBullet()`
 - `Player3D.Died` -> `Game3D.EndWithDefeat()`
@@ -39,6 +40,23 @@ Godot's `[Signal]` and `EmitSignal()` mechanism is engine-provided; **the events
 their meaning, and the handlers are designed in our code**. No HUD or dash
 mechanics are implemented in this Week 8 3D demo. Status and outcomes are
 printed to Godot's output panel.
+
+## Member A survival timer component
+
+`SurvivalTimer.cs` is a plain C# component that owns the timing responsibility.
+It starts at 60 seconds, subtracts the supplied frame delta, stops at zero, and
+raises `TimeAnnouncement` when the countdown crosses 50, 40, 30, 20, and 10
+seconds. Calling `Reset()` starts a new 60-second round.
+
+The timer deliberately does not decide whether the player wins or loses. This
+keeps Member A's timer responsibility separate from Member B's game-result
+responsibility. Member B's integration work can:
+
+1. create a `SurvivalTimer` in `Game3D`;
+2. call `Reset()` from `StartGame()`;
+3. call `Update(delta)` while the game is running;
+4. print `TimeAnnouncement` values through `GD.Print()`; and
+5. use `IsExpired` to trigger the survival victory condition.
 
 ## Collision configuration
 
