@@ -33,6 +33,8 @@ public partial class Game3D : Node3D
 
 	private bool _running;
 
+	private readonly SurvivalTimer _survivalTimer = new();
+
 	// GODOT lifecycle callback, called when this scene enters the tree.
 	public override void _Ready()
 	{
@@ -65,11 +67,13 @@ public partial class Game3D : Node3D
 		_player.Died +=
 			EndWithDefeat;
 
+		_survivalTimer.TimeAnnouncement += seconds =>
+			GD.Print($"Remaining time: {seconds}s");
+
 		StartGame();
 	}
 
-	public override void _PhysicsProcess(
-		double deltaValue)
+	public override void _PhysicsProcess(double deltaValue)
 	{
 		if (!_running)
 		{
@@ -79,6 +83,16 @@ public partial class Game3D : Node3D
 		float delta = Math.Min(
 			(float)deltaValue,
 			0.033f);
+
+		_survivalTimer.Update(delta);
+
+		if (_survivalTimer.IsExpired)
+		{
+			_running = false;
+			_player.Active = false;
+			GD.Print("VICTORY");
+			return;
+		}
 
 		_spawnTimer -= delta;
 
@@ -103,6 +117,8 @@ public partial class Game3D : Node3D
 		_spawnTimer = 1.5f;
 
 		_running = true;
+
+		_survivalTimer.Reset();
 
 		_player.ResetPlayer(
 			new Vector3(0f, 0.5f, 0f));
@@ -229,21 +245,9 @@ public partial class Game3D : Node3D
 		}
 
 		_kills++;
-
 		_score += points;
 
-		GD.Print(
-			$"Kills: {_kills}/{TargetKills}"
-			+ $" | Score: {_score}");
-
-		if (_kills >= TargetKills)
-		{
-			_running = false;
-
-			_player.Active = false;
-
-			GD.Print("VICTORY");
-		}
+		GD.Print($"Kills: {_kills} | Score: {_score}");
 	}
 
 	private void EndWithDefeat()
